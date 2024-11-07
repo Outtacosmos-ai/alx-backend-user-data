@@ -81,11 +81,22 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
     return connection
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Retrieve all rows in the users table and display each row under a filtered format
+    """
+    logger = get_logger()
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT COUNT(*) FROM users;")
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users;")
+    
     for row in cursor:
-        print(row[0])
+        filtered_row = '; '.join(f"{k}={v}" for k, v in row.items())
+        logger.info(filtered_row)
+
     cursor.close()
     db.close()
+
+
+if __name__ == "__main__":
+    main()
