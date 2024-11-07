@@ -4,8 +4,10 @@ Module for handling personal data
 """
 
 import logging
-import re
 from typing import List
+
+# PII fields to be redacted
+PII_FIELDS = ('name', 'email', 'phone', 'ssn', 'password')
 
 
 def filter_datum(fields: List[str], redaction: str,
@@ -13,6 +15,7 @@ def filter_datum(fields: List[str], redaction: str,
     """
     Returns the log message obfuscated
     """
+    import re
     for field in fields:
         pattern = f'{field}=.*?{separator}'
         repl = f'{field}={redaction}{separator}'
@@ -41,10 +44,23 @@ class RedactingFormatter(logging.Formatter):
                             log_message, self.SEPARATOR)
 
 
+def get_logger() -> logging.Logger:
+    """
+    Returns a logging.Logger object
+    """
+    logger = logging.getLogger("user_data")
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(RedactingFormatter(PII_FIELDS))
+
+    logger.addHandler(stream_handler)
+
+    return logger
+
+
 if __name__ == "__main__":
-    message = ("name=Bob;email=bob@dylan.com;"
-               "ssn=000-123-0000;password=bobby2019;")
-    log_record = logging.LogRecord("my_logger", logging.INFO,
-                                   None, None, message, None, None)
-    formatter = RedactingFormatter(fields=("email", "ssn", "password"))
-    print(formatter.format(log_record))
+    logger = get_logger()
+    logger.info("Sample message with PII data: "
+                "name=John;email=john@example.com;ssn=123-45-6789")
