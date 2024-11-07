@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-Module for handling personal data
+Module for handling personal data and database operations
 """
 
 import logging
+import mysql.connector
+import os
 from typing import List
 
 # PII fields to be redacted
@@ -60,7 +62,30 @@ def get_logger() -> logging.Logger:
     return logger
 
 
+def get_db() -> mysql.connector.connection.MySQLConnection:
+    """
+    Returns a connector to the MySQL database
+    """
+    username = os.environ.get('PERSONAL_DATA_DB_USERNAME', 'root')
+    password = os.environ.get('PERSONAL_DATA_DB_PASSWORD', '')
+    host = os.environ.get('PERSONAL_DATA_DB_HOST', 'localhost')
+    db_name = os.environ.get('PERSONAL_DATA_DB_NAME')
+
+    connection = mysql.connector.connect(
+        user=username,
+        password=password,
+        host=host,
+        database=db_name
+    )
+
+    return connection
+
+
 if __name__ == "__main__":
-    logger = get_logger()
-    logger.info("Sample message with PII data: "
-                "name=John;email=john@example.com;ssn=123-45-6789")
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users;")
+    for row in cursor:
+        print(row[0])
+    cursor.close()
+    db.close()
