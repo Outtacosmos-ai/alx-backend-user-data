@@ -10,25 +10,23 @@ from typing import TypeVar
 class BasicAuth(Auth):
     """ BasicAuth class
     """
+
     def extract_base64_authorization_header(
         self, authorization_header: str
     ) -> str:
-        """ Method that should implement the logic for checking if a request
-        """
+        """Extracts the Base64 part of the Authorization header."""
         if authorization_header is None:
             return None
         if type(authorization_header) is not str:
             return None
         if not authorization_header.startswith('Basic '):
             return None
-        else:
-            return authorization_header[6:]
+        return authorization_header[6:]
 
     def decode_base64_authorization_header(
         self, base64_authorization_header: str
     ) -> str:
-        """ Method that should implement the logic for checking if a request
-        """
+        """Decodes the Base64 authorization header."""
         if base64_authorization_header is None:
             return None
         if type(base64_authorization_header) is not str:
@@ -43,8 +41,7 @@ class BasicAuth(Auth):
     def extract_user_credentials(
         self, decoded_base64_authorization_header: str
     ) -> (str, str):
-        """ Method that should implement the logic for checking if a request
-        """
+        """Extracts user credentials from the decoded Base64 header."""
         if decoded_base64_authorization_header is None:
             return (None, None)
         if type(decoded_base64_authorization_header) is not str:
@@ -57,28 +54,26 @@ class BasicAuth(Auth):
     def user_object_from_credentials(
         self, user_email: str, user_pwd: str
     ) -> TypeVar('User'):
-        """ Method that should implement the logic for checking if a request
-        """
-        if user_email is None or user_pwd is None:
+        """Retrieves a User instance based on email and password."""
+        if user_email is None or not isinstance(user_email, str):
             return None
-        if type(user_email) is not str or type(user_pwd) is not str:
+        if user_pwd is None or not isinstance(user_pwd, str):
             return None
         try:
             users = User.search({'email': user_email})
-            if users is None or users == []:
-                return None
-            for user in users:
-                if not user.is_valid_password(user_pwd):
-                    return None
-                return user
         except Exception:
             return None
+        for user in users:
+            if user.is_valid_password(user_pwd):
+                return user
+        return None
 
     def current_user(self, request=None) -> TypeVar('User'):
-        """ Method that should implement the logic for checking if a request
-        """
+        """Retrieves the current user from the request."""
         header = self.authorization_header(request)
         base64_header = self.extract_base64_authorization_header(header)
-        decoded_header = self.decode_base64_authorization_header(base64_header)
+        decoded_header = self.decode_base64_authorization_header(
+            base64_header
+        )
         user, pwd = self.extract_user_credentials(decoded_header)
         return self.user_object_from_credentials(user, pwd)
