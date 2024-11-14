@@ -3,33 +3,37 @@
 Auth class
 """
 
-from tabnanny import check
+import re
 from flask import request
 from typing import TypeVar, List
+
 User = TypeVar('User')
 
 
 class Auth:
     """
-    a class to manage the API authentication
+    A class to manage the API authentication
     """
 
     def require_auth(self, path: str, excluded_paths: List[str]) -> bool:
         """
-        returns False - path and excluded_paths
+        Checks if the given path requires authentication
         """
-        check = path
-        if path is None or excluded_paths is None or len(excluded_paths) == 0:
+        if path is None or excluded_paths is None or not excluded_paths:
             return True
-        if path[-1] != "/":
-            check += "/"
-        if check in excluded_paths or path in excluded_paths:
-            return False
+
+        for excluded_path in excluded_paths:
+            if excluded_path.endswith('*'):
+                if re.match(f"^{excluded_path[:-1]}.*$", path):
+                    return False
+            elif path.rstrip('/') == excluded_path.rstrip('/'):
+                return False
+
         return True
 
     def authorization_header(self, request=None) -> str:
         """
-        returns None - request
+        Retrieves the Authorization header from the request
         """
         if request is None:
             return None
@@ -37,6 +41,6 @@ class Auth:
 
     def current_user(self, request=None) -> User:
         """
-        returns None - request
+        Returns the current user (None by default)
         """
         return None
