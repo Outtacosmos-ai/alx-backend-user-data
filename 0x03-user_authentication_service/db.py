@@ -32,16 +32,20 @@ class DB:
         """Add a new user to the database
 
         Args:
-            email: The user's email address
-            hashed_password: The user's hashed password
+            email (str): The user's email address
+            hashed_password (str): The user's hashed password
 
         Returns:
             User: The newly created User object
         """
-        user = User(email=email, hashed_password=hashed_password)
-        self._session.add(user)
-        self._session.commit()
-        return user
+        try:
+            user = User(email=email, hashed_password=hashed_password)
+            self._session.add(user)
+            self._session.commit()
+            return user
+        except Exception as e:
+            self._session.rollback()  # Rollback in case of failure
+            raise e
 
     def find_user_by(self, **kwargs) -> User:
         """Find a user in the database by arbitrary attributes
@@ -61,10 +65,10 @@ class DB:
             if user is None:
                 raise NoResultFound
             return user
-        except NoResultFound:
-            raise
-        except InvalidRequestError:
-            raise
+        except InvalidRequestError as e:
+            raise e
+        except Exception as e:
+            raise e
 
     def update_user(self, user_id: int, **kwargs) -> None:
         """Update a user's attributes
@@ -77,11 +81,13 @@ class DB:
             ValueError: If an invalid field is passed
             NoResultFound: If the user is not found
         """
-        user = self.find_user_by(id=user_id)
-
-        for key, value in kwargs.items():
-            if not hasattr(user, key):
-                raise ValueError
-            setattr(user, key, value)
-
-        self._session.commit()
+        try:
+            user = self.find_user_by(id=user_id)
+            for key, value in kwargs.items():
+                if not hasattr(user, key):
+                    raise ValueError(f"Invalid field {key}")
+                setattr(user, key, value)
+            self._session.commit()
+        except Exception as e:
+            self._session.rollback()  # Rollback if update fails
+            raise e

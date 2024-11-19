@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
 """
-Main file
+Main file for testing DB methods
 """
-from auth import Auth
 
-email = 'me@me.com'
-password = 'mySecuredPwd'
+from db import DB
+from user import User
 
-auth = Auth()
+my_db = DB()
 
-try:
-    user = auth.register_user(email, password)
-    print("successfully created a new user!")
-except ValueError as err:
-    print("could not create a new user: {}".format(err))
+# Test adding users
+user_1 = my_db.add_user("test@test.com", "SuperHashedPwd")
+print(user_1.id)  # Should print 1
 
-try:
-    user = auth.register_user(email, password)
-    print("successfully created a new user!")
-except ValueError as err:
-    print("could not create a new user: {}".format(err))
+user_2 = my_db.add_user("test1@test.com", "SuperHashedPwd1")
+print(user_2.id)  # Should print 2
